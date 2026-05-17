@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inversion — 在你失败之前,先想象失败</title>
+<meta name="description" content="基于反演思维和 pre-mortem 方法的决策辅助 App。输入一个决定,AI 帮你推演 20 种最可能的失败路径,然后告诉你怎么避开。">
+<meta property="og:title" content="Inversion — 在你失败之前,先想象失败">
+<meta property="og:description" content="大多数人为成功做计划,聪明人为失败做计划。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #FAFAF7;
+  --bg-card: #FFFFFF;
+  --text: #1A1A1A;
+  --text-mute: #6B6B6B;
+  --text-light: #999;
+  --border: rgba(0,0,0,0.08);
+  --accent-red: #A32D2D;
+  --accent-red-bg: #FCEBEB;
+  --accent-amber: #BA7517;
+  --accent-amber-bg: #FAEEDA;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* Nav */
+nav {
+  position: sticky;
+  top: 0;
+  background: rgba(250,250,247,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--border);
+  z-index: 100;
+  padding: 16px 0;
+}
+nav .container { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.nav-links { display: flex; gap: 28px; align-items: center; }
+.nav-links a { color: var(--text-mute); text-decoration: none; font-size: 14px; }
+.nav-links a:hover { color: var(--text); }
+.btn-primary {
+  background: var(--text);
+  color: white;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-primary:hover { opacity: 0.85; }
+
+/* Hero */
+.hero { padding: 120px 0 100px; text-align: center; }
+.hero h1 {
+  font-size: 60px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 28px;
+}
+.hero h1 .mute { color: var(--text-mute); }
+.hero .sub {
+  font-size: 19px;
+  color: var(--text-mute);
+  max-width: 580px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+.hero-cta { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.btn-large {
+  padding: 14px 28px;
+  font-size: 15px;
+  border-radius: 8px;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 0.5px solid var(--border);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.hero-platforms {
+  margin-top: 36px;
+  font-size: 13px;
+  color: var(--text-light);
+}
+.hero-platforms span { margin: 0 12px; }
+
+/* Quote section */
+.quote-section { padding: 60px 0; }
+.quote {
+  max-width: 720px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text);
+  font-style: italic;
+}
+.quote-author {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-mute);
+  font-style: normal;
+}
+
+/* Problem */
+.section { padding: 100px 0; }
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  margin-bottom: 16px;
+}
+.section h2 {
+  font-size: 42px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-bottom: 24px;
+}
+.section .lede {
+  font-size: 18px;
+  color: var(--text-mute);
+  max-width: 640px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 48px;
+}
+.problem-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+}
+.problem-card .icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-red-bg);
+  color: var(--accent-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+.problem-card h3 { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+.problem-card p { font-size: 14px; color: var(--text-mute); line-height: 1.65; }
+
+/* How it works */
+.how-it-works { background: var(--bg-card); padding: 100px 0; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-top: 60px;
+}
+.step .step-num {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+.step h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; line-height: 1.3; }
+.step p { font-size: 14px; color: var(--text-mute); line-height: 1.6; }
+
+/* Example */
+.example-section { padding: 100px 0; }
+.example-wrapper {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 48px;
+  margin-top: 48px;
+}
+.example-input {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 18px 22px;
+  margin-bottom: 32px;
+  font-size: 16px;
+  color: var(--text-mute);
+}
+.example-input strong { color: var(--text); font-weight: 500; }
+.example-paths { display: flex; flex-direction: column; gap: 14px; }
+.example-path {
+  display: flex;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 10px;
+  background: var(--bg);
+  border-left: 3px solid var(--accent-red);
+}
+.example-path.amber { border-left-color: var(--accent-amber); }
+.example-path .meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+  align-items: flex-start;
+}
+.example-path .tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--accent-red-bg);
+  color: var(--accent-red);
+  font-weight: 500;
+}
+.example-path.amber .tag { background: var(--accent-amber-bg); color: var(--accent-amber); }
+.example-path .score { font-size: 11px; color: var(--text-light); }
+.example-path .score.fatal { color: var(--accent-red); font-weight: 500; }
+.example-path .score.watch { color: var(--accent-amber); font-weight: 500; }
+.example-path.notice { border-left-color: var(--text-light); }
+.example-path.notice .tag { background: rgba(0,0,0,0.06); color: var(--text-mute); }
+.example-path .content { flex: 1; }
+.example-path h4 { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.example-path p { font-size: 13px; color: var(--text-mute); line-height: 1.6; }
+.example-scenario {
+  font-size: 12px;
+  color: var(--text-light);
+  margin: 24px 0 6px;
+  letter-spacing: 0.03em;
+}
+
+/* Why */
+.why-section { background: var(--bg-card); padding: 100px 0; border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+.why-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 48px; margin-top: 48px; }
+.why-card h3 { font-size: 20px; font-weight: 500; margin-bottom: 12px; }
+.why-card p { font-size: 15px; color: var(--text-mute); line-height: 1.7; }
+
+/* Pricing */
+.pricing { padding: 100px 0; text-align: center; }
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 720px;
+  margin: 60px auto 0;
+}
+.price-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  padding: 36px 32px;
+  text-align: left;
+}
+.price-card.featured { border: 2px solid var(--text); }
+.price-card .plan-name { font-size: 14px; color: var(--text-mute); font-weight: 500; margin-bottom: 12px; }
+.price-card .price { font-size: 36px; font-weight: 500; margin-bottom: 4px; }
+.price-card .price .period { font-size: 14px; color: var(--text-mute); font-weight: 400; }
+.price-card .price-note { font-size: 13px; color: var(--text-light); margin-bottom: 24px; }
+.price-card ul { list-style: none; margin-bottom: 28px; }
+.price-card li { font-size: 14px; color: var(--text); padding: 8px 0; line-height: 1.5; }
+.price-card li:before { content: "·  "; color: var(--text-light); }
+.price-card .btn-ghost, .price-card .btn-primary { width: 100%; text-align: center; }
+
+/* FAQ */
+.faq { padding: 100px 0; }
+.faq-list { max-width: 720px; margin: 48px auto 0; }
+.faq-item {
+  border-bottom: 0.5px solid var(--border);
+  padding: 24px 0;
+}
+.faq-item h3 { font-size: 17px; font-weight: 500; margin-bottom: 10px; }
+.faq-item p { font-size: 15px; color: var(--text-mute); line-height: 1.7; }
+
+/* Final CTA */
+.final-cta {
+  background: var(--text);
+  color: white;
+  padding: 100px 0;
+  text-align: center;
+}
+.final-cta h2 { font-size: 44px; color: white; line-height: 1.2; margin-bottom: 28px; font-weight: 500; }
+.final-cta p { font-size: 17px; color: rgba(255,255,255,0.7); margin-bottom: 40px; }
+.final-cta .btn-primary {
+  background: white;
+  color: var(--text);
+  padding: 14px 32px;
+  font-size: 15px;
+}
+
+/* Footer */
+footer { padding: 48px 0; border-top: 0.5px solid var(--border); }
+footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+footer p { font-size: 13px; color: var(--text-light); }
+footer .footer-links { display: flex; gap: 24px; }
+footer .footer-links a { font-size: 13px; color: var(--text-mute); text-decoration: none; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .hero { padding: 80px 0 60px; }
+  .hero h1 { font-size: 38px; }
+  .hero .sub { font-size: 16px; }
+  .section { padding: 60px 0; }
+  .section h2 { font-size: 30px; }
+  .problem-grid, .steps, .why-grid, .pricing-grid { grid-template-columns: 1fr; }
+  .example-wrapper { padding: 24px; }
+  .example-path { flex-direction: column; gap: 8px; }
+  .example-path .meta { flex-direction: row; }
+  .final-cta h2 { font-size: 30px; }
+  .nav-links { gap: 16px; }
+  .nav-links a:not(.btn-primary) { display: none; }
+}
+
+/* ============ Chat Widget ============ */
+.chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  background: var(--text);
+  color: white;
+  padding: 14px 22px 14px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 200;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  font-family: inherit;
+}
+.chat-fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,0.2); }
+.chat-fab .dot {
+  width: 8px;
+  height: 8px;
+  background: #6BCB6B;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(107,203,107,0.5);
+  animation: chat-pulse 2s infinite;
+}
+@keyframes chat-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(107,203,107,0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(107,203,107,0); }
+  100% { box-shadow: 0 0 0 0 rgba(107,203,107,0); }
+}
+.chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 380px;
+  height: 560px;
+  max-height: calc(100vh - 48px);
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+  z-index: 201;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: inherit;
+}
+.chat-panel.open { display: flex; }
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+}
+.chat-header h4 {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+.chat-header .subtitle {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 2px;
+}
+.chat-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-mute);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+.chat-close:hover { background: var(--bg); color: var(--text); }
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.chat-msg { max-width: 88%; font-size: 14px; line-height: 1.55; }
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--text);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 14px 14px 4px 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.chat-msg.assistant {
+  align-self: flex-start;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.chat-msg.assistant.error { color: var(--accent-red); }
+.chat-msg.assistant .cursor {
+  display: inline-block;
+  width: 6px;
+  height: 14px;
+  background: var(--text);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: chat-blink 1s infinite;
+}
+@keyframes chat-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+.chat-suggestions {
+  padding: 0 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chat-suggestion {
+  text-align: left;
+  background: var(--bg);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.chat-suggestion:hover { background: rgba(0,0,0,0.04); }
+.chat-input-wrap {
+  padding: 12px 16px 16px;
+  border-top: 0.5px solid var(--border);
+  background: var(--bg-card);
+}
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.chat-input {
+  flex: 1;
+  resize: none;
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  max-height: 140px;
+  min-height: 40px;
+}
+.chat-input:focus { border-color: var(--text); background: var(--bg-card); }
+.chat-send {
+  background: var(--text);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 40px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.chat-footer-note {
+  font-size: 11px;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .chat-panel {
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  .chat-fab { right: 16px; bottom: 16px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">↻ Inversion</div>
+    <div class="nav-links">
+      <a href="#how">怎么用</a>
+      <a href="#example">看示例</a>
+      <a href="#pricing">价格</a>
+      <a href="downloads/inversion-app_0.1.0_x64-setup.exe" class="btn-primary" download>下载 App</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <h1>
+      在你失败之前,<br>
+      <span class="mute">先想象失败。</span>
+    </h1>
+    <p class="sub">
+      大多数人为成功做计划,聪明人为失败做计划。<br>
+      Inversion 用 AI 帮你推演 20 种最可能的失败路径,然后告诉你怎么避开。
+    </p>
+    <div class="hero-cta">
+      <a href="downloads/inversion-app_0.1.0_x64-setup.exe" class="btn-primary btn-large" download>下载 Windows alpha → <small style="opacity:0.7;font-weight:400;">1.9MB</small></a>
+      <a href="#example" class="btn-ghost">先看一个真实示例</a>
+    </div>
+    <p class="hero-platforms">
+      <span><strong>Windows 已就绪</strong></span>·<span style="opacity:0.55;">macOS 即将推出</span>·<span style="opacity:0.45;">iOS/Android 待定</span>
+    </p>
+  </div>
+</section>
+
+<section class="quote-section">
+  <div class="container">
+    <p class="quote">
+      "我只想知道自己将来会死在哪里,这样我就永远不去那里。"
+      <span class="quote-author" style="display: block;">— Charlie Munger</span>
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <p class="section-eyebrow">为什么大多数决定都翻车</p>
+    <h2>你不缺乐观,<br>你缺一份提前写好的失败清单。</h2>
+    <p class="lede">行为经济学有个名字叫"规划谬误"——人在做计划时系统性地高估自己、低估障碍。你不是不够聪明,你只是被自己的乐观骗了。</p>
+
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">!</div>
+        <h3>你只想到了顺境</h3>
+        <p>计划"如果一切顺利会怎样"很容易。问题是,事情几乎从不一切顺利。</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">!</div>
+        <h3>你被自己的承诺锁死</h3>
+        <p>一旦投入金钱、时间、情感,你就开始无视所有警告信号。沉没成本会让你越陷越深。</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">!</div>
+        <h3>没人愿意泼你冷水</h3>
+        <p>家人怕伤你心,朋友怕得罪你,顾问怕丢生意。最该说真话的人,往往最不肯说。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how-it-works" id="how">
+  <div class="container">
+    <p class="section-eyebrow">怎么用</p>
+    <h2>5 分钟,4 步,<br>把你的决定压力测试一遍。</h2>
+
+    <div class="steps">
+      <div class="step">
+        <p class="step-num">01</p>
+        <h3>写下你的决定</h3>
+        <p>一句话就够。"我打算下个月辞职去开咖啡店。"</p>
+      </div>
+      <div class="step">
+        <p class="step-num">02</p>
+        <h3>回答 3 个澄清问题</h3>
+        <p>AI 会问出你没想清楚的关键点:资源、验证、退路。</p>
+      </div>
+      <div class="step">
+        <p class="step-num">03</p>
+        <h3>看 20 种失败路径</h3>
+        <p>按可能性和杀伤力排序。哪些是致命的、哪些只是麻烦,一目了然。</p>
+      </div>
+      <div class="step">
+        <p class="step-num">04</p>
+        <h3>拿到避险清单</h3>
+        <p>针对高风险路径,生成本周可执行的具体行动。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="example-section" id="example">
+  <div class="container">
+    <p class="section-eyebrow">真实场景压力测试</p>
+    <h2>不是泛泛提醒,<br>而是指出你没看见的失败路径。</h2>
+    <p class="lede">下面来自 3 个实测场景:中产辞职创业、博士退学转行、跳槽加入 AI 创业公司。每条都必须引用用户自己的具体情况,否则不算合格输出。</p>
+
+    <div class="example-wrapper">
+      <div class="example-input">
+        <strong>测试输入:</strong> 我 32 岁,上海产品经理,月薪 4 万。想辞职和大学室友在成都开精品咖啡店,启动资金 80 万,我出 50 万。
+      </div>
+
+      <div class="example-paths">
+        <p class="example-scenario">场景 01 · 辞职合伙开咖啡店</p>
+        <div class="example-path">
+          <div class="meta">
+            <span class="tag">自身</span>
+            <span class="score fatal">致命</span>
+          </div>
+          <div class="content">
+            <h4>你喜欢的是周末咖啡</h4>
+            <p>你做了 7 年上海 PM,但没做过餐饮班;真实工作是开店擦地、退款投诉和外卖差评。</p>
+          </div>
+        </div>
+
+        <div class="example-path">
+          <div class="meta">
+            <span class="tag">家庭</span>
+            <span class="score fatal">致命</span>
+          </div>
+          <div class="content">
+            <h4>二胎期辞职会引爆家庭账本</h4>
+            <p>你妻子刚生二胎且无收入,50 万亏损不是个人试错,会变成全家现金流事件。</p>
+          </div>
+        </div>
+
+        <p class="example-scenario">场景 02 · 博士退学转行</p>
+        <div class="example-path amber">
+          <div class="meta">
+            <span class="tag">自身</span>
+            <span class="score watch">警惕</span>
+          </div>
+          <div class="content">
+            <h4>你讨厌的可能是导师关系</h4>
+            <p>如果痛苦主要来自导师而不是研究本身,退学只能解决人际压力,不能证明转行方向成立。</p>
+          </div>
+        </div>
+
+        <div class="example-path">
+          <div class="meta">
+            <span class="tag">时机</span>
+            <span class="score fatal">致命</span>
+          </div>
+          <div class="content">
+            <h4>退学会切断你的身份缓冲</h4>
+            <p>你读到博四才想转行,一旦退学,过去几年不再是履历优势,会被市场追问产出。</p>
+          </div>
+        </div>
+
+        <p class="example-scenario">场景 03 · 跳槽加入 AI 创业公司</p>
+        <div class="example-path">
+          <div class="meta">
+            <span class="tag">执行</span>
+            <span class="score fatal">致命</span>
+          </div>
+          <div class="content">
+            <h4>授权没写进 offer</h4>
+            <p>CEO 口头说你管增长和产品,但 offer 没写预算、人头和决策权,入职后难追责。</p>
+          </div>
+        </div>
+
+        <div class="example-path amber">
+          <div class="meta">
+            <span class="tag">时机</span>
+            <span class="score watch">警惕</span>
+          </div>
+          <div class="content">
+            <h4>房贷会缩短你的试错期</h4>
+            <p>你每月房贷 2.2 万,降薪 25 万后,公司波动会更快进入家庭现金流。</p>
+          </div>
+        </div>
+
+        <p style="text-align: center; font-size: 13px; color: var(--text-light); margin-top: 8px;">
+          ··· 每个场景还有 14-18 条失败路径 + 针对高风险项的避险清单 ···
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="why-section">
+  <div class="container">
+    <p class="section-eyebrow">为什么是 Inversion</p>
+    <h2>不是又一个 ChatGPT 套壳。</h2>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <h3>一个观点,一个产品</h3>
+        <p>市面上的 AI 决策工具都试图"什么都能问"。我们只做一件事:把你脑子里的"乐观偏差"撬开,让你看清失败的路径。一个工具做透,胜过十个工具凑合。</p>
+      </div>
+      <div class="why-card">
+        <h3>提示词是核心壁垒</h3>
+        <p>同样调用 Claude API,普通提示词给你"准备不充分"这种废话。我们的提示词要求每条失败路径都绑定用户具体情况,并输出可执行的避险动作。</p>
+      </div>
+      <div class="why-card">
+        <h3>本地优先,隐私至上</h3>
+        <p>你的决策很私密。所有数据存在你自己的设备上,我们看不到。BYOK 模式让你用自己的 API Key,我们不当中间商。</p>
+      </div>
+      <div class="why-card">
+        <h3>不止预测,还会复盘</h3>
+        <p>30 天后,App 会提醒你回来:这些失败真的发生了吗?长期形成你的个人决策档案,看清自己在哪类决策上系统性出错。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="pricing">
+  <div class="container">
+    <p class="section-eyebrow">当前阶段</p>
+    <h2>alpha 阶段，<br>完全免费 · BYOK 模式。</h2>
+
+    <div class="pricing-grid">
+      <div class="price-card featured">
+        <p class="plan-name">v0.1 alpha · 现在</p>
+        <p class="price">¥0<span class="period"> 完全免费</span></p>
+        <p class="price-note">仅 Windows · 无需注册</p>
+        <ul>
+          <li>无限次推演 + 避险清单</li>
+          <li>20 条失败路径（按可能性 × 杀伤力排序）</li>
+          <li>本地决策档案 + 30 天 check-in</li>
+          <li>决策模板库（8 种常见类型）</li>
+          <li>Markdown 一键导出</li>
+          <li>需要自己的 API Key（DeepSeek 每月有免费额度）</li>
+        </ul>
+        <a href="downloads/inversion-app_0.1.0_x64-setup.exe" class="btn-primary" download>下载 alpha · 1.9MB</a>
+      </div>
+
+      <div class="price-card">
+        <p class="plan-name">v1.0 公开版 · 计划中</p>
+        <p class="price">未定<span class="period"></span></p>
+        <p class="price-note">macOS / iOS / Android · 时间表见下</p>
+        <ul>
+          <li>macOS 版（CI 配置完成后）</li>
+          <li>Pro 版：代付 API + 云端同步</li>
+          <li>30 天 check-in 自动提醒</li>
+          <li>个人决策档案分析</li>
+          <li style="color: var(--text-light);">v1.0 价格会在 alpha 用户反馈后定</li>
+        </ul>
+        <a href="#download" class="btn-ghost" style="pointer-events: none; opacity: 0.5;">尚未发布</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq">
+  <div class="container">
+    <p class="section-eyebrow" style="text-align: center;">常见问题</p>
+    <h2 style="text-align: center;">还有些疑虑?</h2>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>这和直接问 ChatGPT 有什么区别?</h3>
+        <p>区别是结构化和深度。ChatGPT 给你的是模糊的"注意以下几点",我们给你的是 20 条按可能性 × 杀伤力排序、带因果链、带行动项的失败路径。你也可以把我们看作"提示词工程的成品",省去你自己调几十次提示词的时间。</p>
+      </div>
+      <div class="faq-item">
+        <h3>会不会让我变得太悲观,什么都不敢做?</h3>
+        <p>恰恰相反。研究表明,事前做过 pre-mortem 的人,执行力反而更强。因为你不再被未知的恐惧拖累,而是把恐惧变成了清单。看完 20 种失败路径之后,你会比开始时更冷静、更有准备。</p>
+      </div>
+      <div class="faq-item">
+        <h3>为什么是 20 条,不是 10 条或 50 条?</h3>
+        <p>少于 15 条覆盖不全,容易遗漏关键风险;多于 25 条用户会失去耐心,而且 AI 会开始凑数。20 是我们测试出的最佳数字——足够全面,又能在 5 分钟内读完。</p>
+      </div>
+      <div class="faq-item">
+        <h3>BYOK(自带 API Key)怎么操作?</h3>
+        <p>v0.1 alpha 支持 DeepSeek（每月有免费额度，国内访问稳定）。从 platform.deepseek.com 申请 key，粘贴到 App 设置里即可。Key 会安全存储在 Windows Credential Manager 中，永不上传。Claude 支持将在 v0.2 上线。</p>
+      </div>
+      <div class="faq-item">
+        <h3>我的数据安全吗?</h3>
+        <p>v0.1 alpha：所有决策数据以本地 JSON 文件存储（位置：%APPDATA%\com.inversion.app\decisions.json），不上传我们任何服务器。你可以随时打开、备份、删除。API key 单独走系统钥匙串加密存储。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta" id="download">
+  <div class="container">
+    <h2>你的下一个决定,<br>值得先被压力测试一次。</h2>
+    <p>v0.1 alpha · 完全免费 · 无需注册 · Windows 优先 · macOS 即将推出</p>
+    <a href="downloads/inversion-app_0.1.0_x64-setup.exe" class="btn-primary" download>下载 Windows alpha → 1.9MB</a>
+    <p style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 16px;">
+      也可以下载 <a href="downloads/inversion-app_0.1.0_x64_en-US.msi" download style="color: rgba(255,255,255,0.7);">.msi 标准包 (2.9MB)</a>
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 2025 Inversion · 基于反演思维 (inversion) 和 pre-mortem 方法</p>
+    <div class="footer-links">
+      <a href="#">隐私政策</a>
+      <a href="#">条款</a>
+      <a href="#">联系</a>
+      <a href="#">Twitter</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ Chat Widget ============ -->
+<button class="chat-fab" id="chatFab" aria-label="打开 Inversion 助手">
+  <span class="dot"></span>
+  <span>试试 Inversion</span>
+</button>
+
+<div class="chat-panel" id="chatPanel" role="dialog" aria-label="Inversion 预演助手">
+  <div class="chat-header">
+    <div>
+      <h4>↻ Inversion 预演助手</h4>
+      <div class="subtitle">试用版 · 完整 20 条推演在 App 内</div>
+    </div>
+    <button class="chat-close" id="chatClose" aria-label="关闭">×</button>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg assistant">
+你好。<br><br>
+告诉我一个你正在考虑的决定——辞职、搬家、读博、跳槽、合伙……什么都行。<br><br>
+我会帮你看 3-5 条最可能的失败路径，让你在做决定前先想清楚。
+    </div>
+  </div>
+
+  <div class="chat-suggestions" id="chatSuggestions">
+    <button class="chat-suggestion" data-prompt="我 30 岁，互联网产品经理，打算辞职去开咖啡店。">我 30 岁，互联网 PM，打算辞职开咖啡店</button>
+    <button class="chat-suggestion" data-prompt="我在读博士第四年，最近很想退学转行做产品。">博士读到第四年，想退学转行做产品</button>
+    <button class="chat-suggestion" data-prompt="Inversion 和直接问 ChatGPT 有什么区别？">这个和直接问 ChatGPT 有什么区别？</button>
+  </div>
+
+  <div class="chat-input-wrap">
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chatInput" placeholder="写下你的决定，或问我任何关于 Inversion 的问题…" rows="1"></textarea>
+      <button class="chat-send" id="chatSend">发送</button>
+    </div>
+    <p class="chat-footer-note">回车发送 · Shift + 回车换行</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const API_URL = "/api/chat";
+  const STORAGE_KEY = "inversion_chat_history_v1";
+  const MAX_HISTORY = 20;
+
+  const fab = document.getElementById("chatFab");
+  const panel = document.getElementById("chatPanel");
+  const closeBtn = document.getElementById("chatClose");
+  const messagesEl = document.getElementById("chatMessages");
+  const suggestionsEl = document.getElementById("chatSuggestions");
+  const inputEl = document.getElementById("chatInput");
+  const sendBtn = document.getElementById("chatSend");
+
+  let history = [];
+  let isStreaming = false;
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    if (Array.isArray(saved)) history = saved.slice(-MAX_HISTORY);
+  } catch {}
+
+  function saveHistory() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(-MAX_HISTORY)));
+    } catch {}
+  }
+
+  function renderHistory() {
+    // 删除除欢迎语之外的所有消息
+    const welcome = messagesEl.firstElementChild;
+    messagesEl.innerHTML = "";
+    if (welcome) messagesEl.appendChild(welcome);
+    history.forEach((m) => addMessage(m.role, m.content, false));
+  }
+
+  function addMessage(role, content, save = true) {
+    const div = document.createElement("div");
+    div.className = "chat-msg " + role;
+    div.textContent = content;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (save) {
+      history.push({ role, content });
+      if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+      saveHistory();
+    }
+    return div;
+  }
+
+  function setStreaming(s) {
+    isStreaming = s;
+    sendBtn.disabled = s;
+    inputEl.disabled = s;
+  }
+
+  function hideSuggestions() {
+    if (suggestionsEl) suggestionsEl.style.display = "none";
+  }
+
+  async function send(text) {
+    text = (text || "").trim();
+    if (!text || isStreaming) return;
+    hideSuggestions();
+    addMessage("user", text);
+    inputEl.value = "";
+    autoSize();
+
+    setStreaming(true);
+
+    const assistantDiv = document.createElement("div");
+    assistantDiv.className = "chat-msg assistant";
+    const cursor = document.createElement("span");
+    cursor.className = "cursor";
+    assistantDiv.appendChild(cursor);
+    messagesEl.appendChild(assistantDiv);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+
+    let assistantText = "";
+
+    try {
+      const resp = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history.slice(-MAX_HISTORY) }),
+      });
+
+      if (!resp.ok) {
+        const errBody = await resp.json().catch(() => ({}));
+        let msg = "出错了。";
+        if (resp.status === 429) msg = "请求太快，喘口气再来。";
+        else if (errBody.message) msg = errBody.message;
+        else if (errBody.error) msg = errBody.error;
+        assistantDiv.textContent = msg;
+        assistantDiv.classList.add("error");
+        setStreaming(false);
+        return;
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.error) {
+              assistantDiv.textContent = "出错了：" + parsed.error;
+              assistantDiv.classList.add("error");
+              continue;
+            }
+            if (parsed.text) {
+              assistantText += parsed.text;
+              // 移除 cursor，更新文本，重新加 cursor
+              cursor.remove();
+              assistantDiv.textContent = assistantText;
+              assistantDiv.appendChild(cursor);
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+          } catch {}
+        }
+      }
+
+      cursor.remove();
+      if (assistantText) {
+        history.push({ role: "assistant", content: assistantText });
+        if (history.length > MAX_HISTORY) history = history.slice(-MAX_HISTORY);
+        saveHistory();
+      } else {
+        assistantDiv.textContent = "（没收到内容，请重试）";
+        assistantDiv.classList.add("error");
+      }
+    } catch (err) {
+      cursor.remove();
+      assistantDiv.textContent = "网络错误：" + (err.message || err);
+      assistantDiv.classList.add("error");
+    } finally {
+      setStreaming(false);
+      inputEl.focus();
+    }
+  }
+
+  function autoSize() {
+    inputEl.style.height = "40px";
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + "px";
+  }
+
+  fab.addEventListener("click", () => {
+    panel.classList.add("open");
+    fab.style.display = "none";
+    inputEl.focus();
+    renderHistory();
+  });
+
+  closeBtn.addEventListener("click", () => {
+    panel.classList.remove("open");
+    fab.style.display = "flex";
+  });
+
+  sendBtn.addEventListener("click", () => send(inputEl.value));
+
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send(inputEl.value);
+    }
+  });
+
+  inputEl.addEventListener("input", autoSize);
+
+  if (suggestionsEl) {
+    suggestionsEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".chat-suggestion");
+      if (btn) send(btn.dataset.prompt);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

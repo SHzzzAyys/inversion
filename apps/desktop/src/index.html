@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inversion · 反演推演</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+    <!-- ============ Header ============ -->
+    <header class="app-header">
+      <div class="logo">↻ Inversion</div>
+      <div class="header-actions">
+        <button class="history-btn" id="historyBtn" title="查看决策历史">
+          <span>📁</span>
+          <span class="history-count" id="historyCount">0</span>
+        </button>
+        <button class="status-pill" id="apiStatus" title="点击重新配置 API key">
+          <span class="status-dot"></span>
+          <span class="status-text">检查中…</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ============ View: Setup ============ -->
+    <main class="view" id="view-setup">
+      <div class="setup-card">
+        <h2>欢迎使用 Inversion</h2>
+        <p class="setup-intro">
+          Inversion 是本地 App，不收集你的决策数据。<br>
+          但 AI 推演需要调用大模型——所以你要带自己的 API key（BYOK）。<br>
+          <strong>Key 只存在你电脑的系统钥匙串里</strong>，永不上传。
+        </p>
+
+        <label class="form-label">选择 AI Provider</label>
+        <div class="provider-grid">
+          <button class="provider-btn active" data-provider="deepseek">
+            <div class="provider-name">DeepSeek</div>
+            <div class="provider-meta">¥0.55-2.19 / M tokens · 国内访问稳</div>
+          </button>
+          <button class="provider-btn" data-provider="claude">
+            <div class="provider-name">Claude (Anthropic)</div>
+            <div class="provider-meta">需国外网络 · 推理质量最高</div>
+          </button>
+        </div>
+
+        <label class="form-label" for="setupKeyInput">填入 API Key</label>
+        <div class="key-input-row">
+          <input
+            id="setupKeyInput"
+            type="password"
+            placeholder="sk-..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="btn-secondary" id="toggleKeyVisible" title="显示/隐藏">👁</button>
+        </div>
+        <p class="form-help" id="setupKeyHelp">
+          从
+          <a href="#" class="ext-link" data-url="https://platform.deepseek.com/api_keys">DeepSeek 控制台</a>
+          申请 key（每月有免费额度）
+        </p>
+
+        <div class="setup-actions">
+          <button class="btn-primary" id="setupSaveBtn" disabled>测试并保存</button>
+          <span class="setup-status" id="setupStatus"></span>
+        </div>
+
+        <details class="setup-faq">
+          <summary>为什么要 BYOK？为什么不直接给我做付费版？</summary>
+          <p>
+            付费版要做支付、要承担合规、要预估流量——这些都会让 v0.1 阶段太重。
+            BYOK 模式让我们先验证"产品本身有没有用"，而不是"商业模式能不能跑"。
+            未来 Pro 版会代付 API 费用，但要等 v0.4。
+          </p>
+        </details>
+      </div>
+    </main>
+
+    <!-- ============ View: Input ============ -->
+    <main class="view hidden" id="view-input">
+      <div class="checkin-banner hidden" id="checkinBanner">
+        <div class="checkin-banner-inner">
+          <div class="checkin-banner-text">
+            <strong id="checkinBannerTitle">⏰ 你有一份 30 天前的推演等待回访</strong>
+            <span id="checkinBannerHint"></span>
+          </div>
+          <div class="checkin-banner-actions">
+            <button class="btn-secondary" id="checkinSnoozeBtn">下次再说</button>
+            <button class="btn-primary" id="checkinOpenBtn">现在回访 →</button>
+          </div>
+        </div>
+      </div>
+      <section class="hero">
+        <h1>在你失败之前，<span class="mute">先想象失败。</span></h1>
+        <p class="sub">输入一个你正在考虑的决定，AI 会问你 3 个澄清问题，然后列出 20 条最可能让它失败的具体路径。</p>
+      </section>
+
+      <section class="input-section">
+        <form id="decisionForm">
+          <textarea
+            id="decisionInput"
+            placeholder="例如：我 32 岁上海产品经理，月薪 4 万，想辞职和大学室友在成都开精品咖啡店，启动资金 80 万我出 50 万…"
+            rows="6"
+            maxlength="2000"
+          ></textarea>
+          <div class="input-meta">
+            <span id="charCount">0 / 2000 · 至少 20 字</span>
+            <button type="submit" id="submitBtn" class="btn-primary" disabled>
+              开始推演 →
+            </button>
+          </div>
+        </form>
+
+        <div class="example-row">
+          <span class="example-label">完整示例（点击直接用）</span>
+          <button class="example-btn" data-example="我在读博士第四年，方向是机器学习。最近很想退学转去做 AI 产品经理，对学术没兴趣了。导师高压，每周一对一被骂。">博士退学</button>
+          <button class="example-btn" data-example="父母强烈要求我回老家考公务员。我在北京做 3 年程序员，月薪 2.5 万，租房压力大。老家在山东三线城市，公务员到手 5-6 千。">回老家考公</button>
+          <button class="example-btn" data-example="我想从大厂跳到一家 AI 创业公司当增长负责人，月薪从 5 万降到 3.8 万 + 期权 0.3%。Offer 没写预算和决策权。每月房贷 2.2 万。">AI 创业跳槽</button>
+        </div>
+
+        <details class="templates-drawer">
+          <summary>
+            <span>或从模板开始</span>
+            <span class="templates-hint">8 个常见决策类型 · 填入半结构化文本供你修改</span>
+          </summary>
+          <div class="templates-grid" id="templatesGrid">
+            <!-- 动态填充 -->
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <!-- ============ View: Clarifying ============ -->
+    <main class="view hidden" id="view-clarifying">
+      <div class="step-header">
+        <button class="back-btn" data-target="input">← 改决策</button>
+        <div class="step-indicator">
+          <span class="step active">输入</span>
+          <span class="step-line"></span>
+          <span class="step active">澄清</span>
+          <span class="step-line"></span>
+          <span class="step">推演</span>
+        </div>
+        <div class="step-spacer"></div>
+      </div>
+
+      <section class="clarify-section">
+        <h2>3 个澄清问题</h2>
+        <p class="clarify-intro">这些问题会让后续 20 条失败路径更具体。</p>
+
+        <div id="clarifyLoading" class="loading-block">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          <span>AI 正在生成澄清问题…</span>
+        </div>
+
+        <div id="clarifyQuestions" class="clarify-questions hidden">
+          <!-- 动态填充 -->
+        </div>
+
+        <div class="clarify-actions hidden" id="clarifyActions">
+          <button class="btn-secondary" id="skipClarifyBtn">跳过（不推荐）</button>
+          <button class="btn-primary" id="startAnalyzeBtn" disabled>开始推演 20 条 →</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ View: Analyzing ============ -->
+    <main class="view hidden" id="view-analyzing">
+      <div class="step-header">
+        <div class="step-indicator">
+          <span class="step done">输入</span>
+          <span class="step-line"></span>
+          <span class="step done">澄清</span>
+          <span class="step-line"></span>
+          <span class="step active">推演</span>
+        </div>
+      </div>
+
+      <section class="analyzing-section">
+        <div class="analyzing-progress">
+          <div class="analyzing-dots"><span></span><span></span><span></span></div>
+          <h2 id="analyzingStatus">AI 正在分析你的处境…</h2>
+          <p class="analyzing-hint">reasoner 模型要先思考再回答，首字会慢 5-10 秒。生成完整 20 条需 20-40 秒。</p>
+        </div>
+
+        <div class="streaming-preview" id="streamingPreview">
+          <!-- 流式输出预览（已生成的路径条数）-->
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ View: Results ============ -->
+    <main class="view hidden" id="view-results">
+      <div class="step-header">
+        <button class="back-btn" data-target="input">← 新推演</button>
+        <div class="step-indicator">
+          <span class="step done">输入</span>
+          <span class="step-line"></span>
+          <span class="step done">澄清</span>
+          <span class="step-line"></span>
+          <span class="step done">推演</span>
+        </div>
+        <div class="step-spacer"></div>
+      </div>
+
+      <section class="results-section">
+        <div class="results-summary" id="resultsSummary">
+          <!-- 统计条 -->
+        </div>
+
+        <div class="results-toolbar">
+          <div class="results-filters">
+            <button class="filter-btn active" data-filter="all">全部</button>
+            <button class="filter-btn" data-filter="致命">致命</button>
+            <button class="filter-btn" data-filter="警惕">警惕</button>
+            <button class="filter-btn" data-filter="留意">留意</button>
+          </div>
+          <button class="btn-export" id="exportMdBtn" title="复制 Markdown 到剪贴板">
+            <span>📋</span><span>导出 Markdown</span>
+          </button>
+        </div>
+
+        <div class="results-list" id="resultsList">
+          <!-- 动态填充 20 条路径 -->
+        </div>
+
+        <div class="results-footer">
+          <p class="results-disclaimer">这是 AI 给出的可能失败路径，不是预测。决定权永远在你。</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ View: Check-in ============ -->
+    <main class="view hidden" id="view-checkin">
+      <div class="step-header">
+        <button class="back-btn" data-target="input">← 返回</button>
+        <div class="step-spacer"></div>
+        <div class="step-spacer"></div>
+      </div>
+
+      <section class="checkin-section">
+        <h2 id="checkinHeading">30 天回访</h2>
+        <p class="checkin-intro" id="checkinIntro"></p>
+
+        <div class="checkin-decision-box">
+          <div class="checkin-meta">
+            <span id="checkinDaysAgo"></span>
+            <span class="separator">·</span>
+            <span id="checkinTs"></span>
+          </div>
+          <div class="checkin-decision" id="checkinDecision"></div>
+        </div>
+
+        <h3 class="checkin-section-title">当时这些「致命」路径，现在怎样了？</h3>
+        <div class="checkin-paths" id="checkinPaths">
+          <!-- 动态填充 -->
+        </div>
+
+        <div class="checkin-notes-wrap">
+          <label class="form-label" for="checkinNotes">额外想说的（可选）</label>
+          <textarea
+            id="checkinNotes"
+            class="checkin-notes"
+            rows="3"
+            placeholder="30 天后回头看，你对当时的决定有什么新认识？"
+          ></textarea>
+        </div>
+
+        <div class="checkin-footer">
+          <button class="btn-secondary" id="checkinCancelBtn">取消</button>
+          <button class="btn-primary" id="checkinSaveBtn">保存回访</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ View: History ============ -->
+    <main class="view hidden" id="view-history">
+      <div class="step-header">
+        <button class="back-btn" data-target="input">← 返回</button>
+        <div class="step-spacer"></div>
+        <div class="step-spacer"></div>
+      </div>
+
+      <section class="history-section">
+        <div class="history-title-row">
+          <h2>决策档案</h2>
+          <span class="history-meta" id="historyMeta">本地存储 · 永不上传</span>
+        </div>
+
+        <div class="history-empty hidden" id="historyEmpty">
+          还没有推演记录。回主页输入第一个决策。
+        </div>
+
+        <div class="history-list" id="historyList">
+          <!-- 动态填充 -->
+        </div>
+
+        <div class="history-footer hidden" id="historyFooter">
+          <button class="btn-secondary" id="openArchivePathBtn">在文件管理器中打开</button>
+          <span class="archive-path" id="archivePath"></span>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ Toast ============ -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ============ Dev banner ============ -->
+    <div class="dev-banner">v0.1.0 alpha · Ctrl+Enter 提交 · Ctrl+K 历史 · Esc 返回</div>
+  </body>
+</html>
