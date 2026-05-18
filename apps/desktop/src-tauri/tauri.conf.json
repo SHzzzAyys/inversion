@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "inversion-app",
+  "productName": "Inversion",
   "version": "0.1.0",
   "identifier": "com.inversion.app",
   "build": {
@@ -26,12 +26,32 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "AI-powered decision pre-mortem tool",
+    "longDescription": "Inversion lets you input a decision you're considering, then uses AI to generate 20 most likely failure paths ranked by severity, and produces this-week actionable mitigations for the critical ones. Local-first, BYOK.",
+    "copyright": "© 2026 Inversion. MIT.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "exceptionDomain": "",
+      "dmg": {
+        "background": null,
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        }
+      }
+    },
+    "windows": {
+      "wix": {
+        "language": ["en-US", "zh-CN"]
+      }
+    }
   }
 }

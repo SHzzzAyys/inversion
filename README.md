@@ -1,5 +1,8 @@
 # Inversion
 
+[![Check](https://github.com/SHzzzAyys/inversion/actions/workflows/check.yml/badge.svg)](https://github.com/SHzzzAyys/inversion/actions/workflows/check.yml)
+[![Release](https://github.com/SHzzzAyys/inversion/actions/workflows/release.yml/badge.svg)](https://github.com/SHzzzAyys/inversion/actions/workflows/release.yml)
+
 > 在你失败之前，先想象失败。
 
 基于反演思维（inversion）和 pre-mortem 方法的决策辅助工具。输入一个决定，AI 帮你推演 20 种最可能的失败路径，按可能性 × 杀伤力排序，再为关键路径生成本周可执行的避险动作。
@@ -102,6 +105,28 @@ npx vercel --prod
 2. **BYOK（Bring Your Own Key）**：用户用自己的 API key，价格透明
 3. **小而美**：MVP 5 个 Must Have 功能跑通完整闭环，拒绝过度工程
 4. **可分发**：alpha 阶段 `.exe` 仅 1.9MB，朋友间发文件即可测试
+
+---
+
+## 发布流程
+
+跨平台构建走 **GitHub Actions** —— push 一个 tag 即可自动构建 macOS（Apple Silicon + Intel）、Windows、Linux 四个产物，并创建草稿 Release。
+
+```bash
+# 1. 改 version
+# 编辑 apps/desktop/src-tauri/Cargo.toml 和 tauri.conf.json 把 0.1.0 → 0.2.0
+
+# 2. commit + tag + push
+git add -A
+git commit -m "chore: bump to v0.2.0"
+git tag v0.2.0
+git push origin main --tags
+
+# 3. 等 ~20 分钟，GitHub Actions 自动 build + 创建草稿 release
+# 4. 去 GitHub Releases 页面手动 publish 那个 draft
+```
+
+每次 push 到 main 会自动跑 `Quick Check`（cargo check + npm install 验证），约 5-10 分钟。
 
 ---
 
