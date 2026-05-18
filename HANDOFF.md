@@ -4,8 +4,8 @@
 > 这份文档是你的"上车手册"。读完它你就能直接干活，不需要回看任何聊天历史。
 >
 > **撰写时间**：2026-05-17（项目启动 + alpha 完成同一天）
-> **最后更新者**：上一任 agent（在 Claude Code 里 1 天完成全部 alpha 工作）
-> **当前阶段**：v0.1.0 alpha 已发布，等待真实用户反馈
+> **最后更新**：2026-05-18（加 CI/CD + 跨平台 build + LICENSE + Issue 模板）
+> **当前阶段**：v0.1.0 alpha 已 tag，跨平台产物正在 GitHub Actions 上构建
 
 ---
 
@@ -204,13 +204,19 @@ D:\virtual-companies\
 - **deadline**：1 周内必须做完
 - **没做这一步，所有 v0.2 功能优化都是猜的**
 
-#### P1: macOS 支持
-- **难点**：CEO 没有 mac
-- **路径**：
-  1. 用 **GitHub Actions** 在 macOS runner 上 build（最便宜）
-  2. 或借朋友的 mac 跑一次 `npm run tauri build --target universal-apple-darwin`
-- **预计工时**：1 天（含 GitHub Actions 配置）
-- **风险**：macOS Keychain API 可能跟 Windows Credential Manager 有微妙行为差异
+#### P1: macOS 支持 ✅ 已完成（2026-05-18）
+- **状态**：GitHub Actions 跨平台 build 已配置（`.github/workflows/release.yml`）
+- **触发**：push tag `v*` 自动跑 4 个 runner（macOS aarch64 + macOS x86_64 + Linux + Windows）
+- **产物**：自动创建草稿 GitHub Release，附 `.dmg` / `.msi` / `.exe` / `.AppImage` / `.deb`
+- **每次发布流程**：
+  ```bash
+  # 改 version
+  # 编辑 apps/desktop/src-tauri/Cargo.toml 和 tauri.conf.json
+  git add -A && git commit -m "chore: bump to vX.X.X"
+  git tag vX.X.X && git push origin main --tags
+  # 等 20-25 分钟，去 GitHub Releases publish 草稿
+  ```
+- **首次 release**：v0.1.0 已 tag，跨平台产物已开始构建（runID 26010414626）
 
 #### P2: 第二个 LLM Provider（Claude / OpenAI）
 - **当前**：只支持 DeepSeek
