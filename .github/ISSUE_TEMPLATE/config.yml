@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Alpha 用户使用指南
+    url: https://github.com/SHzzzAyys/inversion/blob/main/apps/desktop/ALPHA-USER-GUIDE.md
+    about: 先看完使用指南，可能已经回答了你的问题
+  - name: 💬 关于产品定位的讨论
+    url: https://github.com/SHzzzAyys/inversion/discussions
+    about: 不是 bug 也不是反馈，是想聊产品方向 / 提功能建议

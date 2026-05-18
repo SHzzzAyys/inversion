@@ -1,0 +1,58 @@
+name: 🐛 Bug Report
+description: 报告一个 Bug
+title: "[Bug] "
+labels: ["bug", "alpha-feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你帮 Inversion alpha 找 bug。请填以下信息让定位更快。
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 操作系统
+      options:
+        - Windows 11
+        - Windows 10
+        - macOS Apple Silicon (M1/M2/M3...)
+        - macOS Intel
+        - Linux (说明发行版)
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Inversion 版本
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 怎么了
+      description: 一句话描述，越具体越好
+      placeholder: 我点击「生成避险清单」按钮，App 卡住 30 秒后无响应
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 重现步骤
+      placeholder: |
+        1. 在主页输入决策"..."
+        2. 完成澄清问答
+        3. 点击第一条致命路径
+        4. 看到错误
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      placeholder: 应该 8-15 秒内出避险清单
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图 / 日志 (可选)
+      description: 拖文件到这里上传

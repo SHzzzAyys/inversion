@@ -1,0 +1,60 @@
+name: 💬 Alpha 用户体验反馈
+description: 跑过一次推演后的真实体验反馈（不是 bug）
+title: "[Feedback] "
+labels: ["alpha-feedback", "ux"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        这份反馈让 Inversion 从"作者觉得能用"变成"真实用户觉得能用"。
+
+        **越锋利越好**——alpha 就是为了找出"不行的地方"。
+  - type: dropdown
+    id: hit
+    attributes:
+      label: 推演结果"打到你"了吗？
+      options:
+        - 真的打到了——指出了我没想清楚的关键点
+        - 一般——有几条有价值，多数是我已经想过的
+        - 没打到——基本都是套话 / 太空泛
+    validations:
+      required: true
+  - type: dropdown
+    id: mitigation
+    attributes:
+      label: 避险清单"本周可执行"吗？
+      options:
+        - 是的——看完知道明天就该做什么
+        - 部分可执行——还有些太抽象
+        - 不可执行——还是"长期养成习惯"那种废话
+        - 我没用避险功能
+    validations:
+      required: true
+  - type: textarea
+    id: best
+    attributes:
+      label: 最让你"对，就是这个"的一条路径
+      description: 贴出来 + 为什么打动你
+      placeholder: |
+        路径：「你妻子刚生二胎且无收入，50 万亏损会击穿家庭账本」
+        打动我的原因：把我一直担心但说不清楚的事说清楚了
+    validations:
+      required: true
+  - type: textarea
+    id: worst
+    attributes:
+      label: 最让你"这是废话"的一条路径
+      description: 贴出来 + 为什么觉得空泛
+      placeholder: |
+        路径：「需要谨慎评估风险」
+        废话的原因：没有具体引用我的处境
+  - type: textarea
+    id: ux
+    attributes:
+      label: UX 卡点
+      description: 哪里让你卡了 30 秒以上？哪里期待按钮却找不到？
+  - type: textarea
+    id: would-pay
+    attributes:
+      label: 如果 Pro 版（代付 API + 云端同步）¥35/月，你会买吗？为什么？
+      description: 不是要你承诺购买，只是评估真实意愿
